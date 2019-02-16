@@ -1,12 +1,13 @@
 import React, { Component } from 'react';
-import './App.css';
-import { Store } from './interfaces/Store';
-import * as d3 from 'd3';
-import { Person, People, FollowRelationship } from './interfaces/Person';
+import { Store } from '../interfaces/Store';
 import { uniq } from 'lodash';
 import { Menu } from './Menu';
-import { Point } from './interfaces/Point';
+import { Point } from '../interfaces/Point';
 import { SocialNetwork } from './SocialNetwork';
+import { People } from '../interfaces/People';
+import { FollowRelationship } from '../interfaces/FollowRelationship';
+import { addPerson } from '../util/DataUtils';
+import { WordCloud } from './WordCloud';
 
 declare var store: Store;
 
@@ -56,9 +57,10 @@ class App extends Component<{}, State> {
             id => this.state.people[id]
         );
 
+        console.log(people);
+
         return (
             <React.Fragment>
-                <Menu onAdd={this.onAdd} onClear={this.onClear} />
                 <SocialNetwork
                     people={people}
                     follows={follows}
@@ -66,6 +68,13 @@ class App extends Component<{}, State> {
                     height={height}
                     center={center}
                 />
+                <WordCloud
+                    width={width}
+                    height={height}
+                    center={center}
+                    people={people}
+                />
+                <Menu onAdd={this.onAdd} onClear={this.onClear} />
             </React.Fragment>
         );
     }
@@ -96,7 +105,7 @@ class App extends Component<{}, State> {
             const newPeopleTags = await store.tags(newIds);
             // Create the new people and assign their tags
             newIds.forEach((id, i) => {
-                const person = this.addPerson(id, people);
+                const person = addPerson(id, people);
                 person.tags = new Set<string>(newPeopleTags[i]);
                 person.radius = person.tags.size * 0.3 + 4;
             });
@@ -131,18 +140,6 @@ class App extends Component<{}, State> {
             people: {},
             follows: []
         });
-    }
-
-    private addPerson(id: number, people: People) {
-        people[id] = {
-            id,
-            tags: new Set<string>(),
-            radius: 0,
-            following: new Set<number>(),
-            followed: new Set<number>()
-        };
-
-        return people[id];
     }
 }
 

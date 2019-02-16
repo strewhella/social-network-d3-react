@@ -7,12 +7,3 @@ export interface Person extends SimulationNodeDatum {
     following: Set<number>;
     followed: Set<number>;
 }
-
-export interface People {
-    [id: number]: Person;
-}
-
-export interface FollowRelationship {
-    source: number;
-    target: number;
-}

@@ -1,7 +1,8 @@
 import * as React from 'react';
-import { Point } from './interfaces/Point';
+import { Point } from '../interfaces/Point';
 import * as d3 from 'd3';
-import { Person, FollowRelationship } from './interfaces/Person';
+import { Person } from '../interfaces/Person';
+import { FollowRelationship } from '../interfaces/FollowRelationship';
 
 interface Props {
     width: number;
@@ -65,8 +66,8 @@ export class SocialNetwork extends React.PureComponent<Props> {
                 'center',
                 d3
                     .forceCenter()
-                    .x(width * 0.5)
-                    .y(height * 0.5)
+                    .x(center.x)
+                    .y(center.y)
             )
             .force('charge', d3.forceManyBody().strength(-5))
             .force(
