@@ -4,6 +4,8 @@ import { Store } from './interfaces/Store';
 import * as d3 from 'd3';
 import { Person, People, FollowRelationship } from './interfaces/Person';
 import { uniq } from 'lodash';
+import { Menu } from './Menu';
+import { Point } from './interfaces/Point';
 
 declare var store: Store;
 
@@ -12,29 +14,42 @@ interface Props {}
 interface State {
     people: People;
     follows: FollowRelationship[];
+    width: number;
+    height: number;
+    center: Point;
 }
 
 class App extends Component<Props, State> {
-    private width: number;
-    private height: number;
     private ref: SVGElement | null = null;
 
     constructor(props: {}) {
         super(props);
 
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const center = { x: width / 2, y: height / 2 };
+
         this.state = {
             people: [],
-            follows: []
+            follows: [],
+            width,
+            height,
+            center
         };
 
         this.onAdd = this.onAdd.bind(this);
+        this.onClear = this.onClear.bind(this);
+        this.onResize = this.onResize.bind(this);
     }
 
     public componentDidMount() {
-        this.width = window.innerWidth;
-        this.height = window.innerHeight;
-
         this.onAdd();
+
+        window.addEventListener('resize', this.onResize);
+    }
+
+    public componentWillUnmount() {
+        window.removeEventListener('resize', this.onResize);
     }
 
     public render() {
@@ -49,6 +64,10 @@ class App extends Component<Props, State> {
         //     .domain([min, max])
         //     .range([0, this.width / 2]);
 
+        const { width, height, follows, center } = this.state;
+
+        console.log(width, height, center);
+
         const people = Object.keys(this.state.people).map(
             id => this.state.people[id]
         );
@@ -56,8 +75,8 @@ class App extends Component<Props, State> {
         let circles = d3
             .select(this.ref)
             .selectAll('circle')
-            .attr('cx', this.width / 2)
-            .attr('cy', this.height / 2)
+            .attr('cx', center.x)
+            .attr('cy', center.y)
             .data(people);
 
         circles.exit().remove();
@@ -66,17 +85,17 @@ class App extends Component<Props, State> {
 
         circles = enter
             .merge(circles as any)
-            .attr('r', d => {
-                return d.tags.size * 0.5 + 5;
-            })
+            .attr('r', d => d.radius)
             .attr('fill', '#000000')
-            .attr('cx', this.width / 2)
-            .attr('cy', this.height / 2);
+            .attr('cx', center.x)
+            .attr('cy', center.y);
 
         let lines = d3
             .select(this.ref)
             .selectAll('line')
-            .data(this.state.follows);
+            .data(follows);
+
+        lines.exit().remove();
 
         let linkEnter = lines
             .enter()
@@ -88,8 +107,6 @@ class App extends Component<Props, State> {
 
         lines = linkEnter.merge(lines as any);
 
-        lines.exit().remove();
-
         // Create a force simulation that attracts circles to the center of the screen
         // but repel and collide with each other
 
@@ -97,7 +114,7 @@ class App extends Component<Props, State> {
             .forceSimulation(people)
             .force(
                 'links',
-                d3.forceLink(this.state.follows).id(d => {
+                d3.forceLink(follows).id(d => {
                     return d['id'] + '';
                 })
             )
@@ -105,33 +122,23 @@ class App extends Component<Props, State> {
                 'center',
                 d3
                     .forceCenter()
-                    .x(this.width * 0.5)
-                    .y(this.height * 0.5)
+                    .x(width * 0.5)
+                    .y(height * 0.5)
             )
-            .force('charge', d3.forceManyBody())
+            .force('charge', d3.forceManyBody().strength(-5))
             .force(
                 'collide',
-                d3.forceCollide().radius((d: Person) => d.tags.size * 0.5 + 5)
+                d3.forceCollide().radius((d: Person) => d.radius)
             );
 
         simulation.nodes(people).on('tick', () => {
             circles
-                .attr('cx', (d: any) => {
-                    if (d.x < 0) {
-                        return 0;
-                    } else if (d.x > this.width) {
-                        return this.width;
-                    }
-                    return d.x;
-                })
-                .attr('cy', (d: any) => {
-                    if (d.y < 0) {
-                        return 0;
-                    } else if (d.y > this.height) {
-                        return this.height;
-                    }
-                    return d.y;
-                });
+                .attr('cx', (d: any) =>
+                    Math.max(d.radius, Math.min(width - d.radius, d.x))
+                )
+                .attr('cy', (d: any) =>
+                    Math.max(d.radius, Math.min(height - d.radius, d.y))
+                );
             lines
                 .attr('x1', (d: any) => d.source.x)
                 .attr('x2', (d: any) => d.target.x)
@@ -141,27 +148,22 @@ class App extends Component<Props, State> {
 
         return (
             <React.Fragment>
-                <button
-                    style={{
-                        position: 'fixed',
-                        top: '30px',
-                        left: '30px',
-                        backgroundColor: 'white',
-                        border: 'black 3px solid',
-                        width: '100px',
-                        height: '100px'
-                    }}
-                    onClick={this.onAdd}
-                >
-                    Add
-                </button>
-                <svg
-                    ref={r => (this.ref = r)}
-                    width={this.width}
-                    height={this.height}
-                />
+                <Menu onAdd={this.onAdd} onClear={this.onClear} />
+                <svg ref={r => (this.ref = r)} width={width} height={height} />
             </React.Fragment>
         );
+    }
+
+    private onResize() {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const center = { x: width / 2, y: height / 2 };
+
+        this.setState({
+            width,
+            height,
+            center
+        });
     }
 
     private async onAdd() {
@@ -180,15 +182,17 @@ class App extends Component<Props, State> {
             newIds.forEach((id, i) => {
                 const person = this.addPerson(id, people);
                 person.tags = new Set<string>(newPeopleTags[i]);
+                person.radius = person.tags.size * 0.3 + 4;
             });
 
             // Add the following relationship to the people
-            // follows.forEach(follow => {
-            //     const a = people[follow[0]];
-            //     const b = people[follow[1]];
+            follows.forEach(follow => {
+                const a = people[follow[0]];
+                const b = people[follow[1]];
 
-            //     a.following.add(b.id);
-            // });
+                a.following.add(b.id);
+                b.followed.add(a.id);
+            });
 
             this.setState({
                 people,
@@ -206,10 +210,20 @@ class App extends Component<Props, State> {
         }
     }
 
+    private onClear() {
+        this.setState({
+            people: {},
+            follows: []
+        });
+    }
+
     private addPerson(id: number, people: People) {
         people[id] = {
             id: `${id}`,
-            tags: new Set<string>()
+            tags: new Set<string>(),
+            radius: 0,
+            following: new Set<string>(),
+            followed: new Set<string>()
         };
 
         return people[id];

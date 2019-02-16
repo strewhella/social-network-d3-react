@@ -1,6 +1,9 @@
 export interface Person {
     id: string;
     tags: Set<string>;
+    radius: number;
+    following: Set<string>;
+    followed: Set<string>;
 }
 
 export interface People {
