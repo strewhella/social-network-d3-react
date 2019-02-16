@@ -2,8 +2,8 @@ import React, { Component } from 'react';
 import './App.css';
 import { Store } from './interfaces/Store';
 import * as d3 from 'd3';
-import { Person, People } from './interfaces/Person';
-import { cloneDeep } from 'lodash';
+import { Person, People, FollowRelationship } from './interfaces/Person';
+import { uniq } from 'lodash';
 
 declare var store: Store;
 
@@ -11,6 +11,7 @@ interface Props {}
 
 interface State {
     people: People;
+    follows: FollowRelationship[];
 }
 
 class App extends Component<Props, State> {
@@ -22,7 +23,8 @@ class App extends Component<Props, State> {
         super(props);
 
         this.state = {
-            people: []
+            people: [],
+            follows: []
         };
 
         this.onAdd = this.onAdd.bind(this);
@@ -54,6 +56,8 @@ class App extends Component<Props, State> {
         let circles = d3
             .select(this.ref)
             .selectAll('circle')
+            .attr('cx', this.width / 2)
+            .attr('cy', this.height / 2)
             .data(people);
 
         circles.exit().remove();
@@ -63,14 +67,40 @@ class App extends Component<Props, State> {
         circles = enter
             .merge(circles as any)
             .attr('r', d => {
-                return d.tags.size + 5;
+                return d.tags.size * 0.5 + 5;
             })
-            .attr('fill', '#000000');
+            .attr('fill', '#000000')
+            .attr('cx', this.width / 2)
+            .attr('cy', this.height / 2);
+
+        let lines = d3
+            .select(this.ref)
+            .selectAll('line')
+            .data(this.state.follows);
+
+        let linkEnter = lines
+            .enter()
+            .append('line')
+            .attr('stroke', function(d) {
+                return '#ddd';
+            })
+            .attr('strokeWidth', _ => 4);
+
+        lines = linkEnter.merge(lines as any);
+
+        lines.exit().remove();
 
         // Create a force simulation that attracts circles to the center of the screen
         // but repel and collide with each other
+
         const simulation = d3
-            .forceSimulation()
+            .forceSimulation(people)
+            .force(
+                'links',
+                d3.forceLink(this.state.follows).id(d => {
+                    return d['id'] + '';
+                })
+            )
             .force(
                 'center',
                 d3
@@ -79,10 +109,34 @@ class App extends Component<Props, State> {
                     .y(this.height * 0.5)
             )
             .force('charge', d3.forceManyBody())
-            .force('collide', d3.forceCollide().radius(5));
+            .force(
+                'collide',
+                d3.forceCollide().radius((d: Person) => d.tags.size * 0.5 + 5)
+            );
 
         simulation.nodes(people).on('tick', () => {
-            circles.attr('cx', (d: any) => d.x).attr('cy', (d: any) => d.y);
+            circles
+                .attr('cx', (d: any) => {
+                    if (d.x < 0) {
+                        return 0;
+                    } else if (d.x > this.width) {
+                        return this.width;
+                    }
+                    return d.x;
+                })
+                .attr('cy', (d: any) => {
+                    if (d.y < 0) {
+                        return 0;
+                    } else if (d.y > this.height) {
+                        return this.height;
+                    }
+                    return d.y;
+                });
+            lines
+                .attr('x1', (d: any) => d.source.x)
+                .attr('x2', (d: any) => d.target.x)
+                .attr('y1', (d: any) => d.source.y)
+                .attr('y2', (d: any) => d.target.y);
         });
 
         return (
@@ -101,9 +155,11 @@ class App extends Component<Props, State> {
                 >
                     Add
                 </button>
-                <svg width={this.width} height={this.height}>
-                    <g ref={r => (this.ref = r)} />
-                </svg>
+                <svg
+                    ref={r => (this.ref = r)}
+                    width={this.width}
+                    height={this.height}
+                />
             </React.Fragment>
         );
     }
@@ -115,7 +171,7 @@ class App extends Component<Props, State> {
             const people = { ...this.state.people };
 
             // Figure out the new people
-            const ids = follows.reduce((p, c) => p.concat(c), []);
+            const ids = uniq(follows.reduce((p, c) => p.concat(c), []));
             const newIds = ids.filter(id => !people[id]);
 
             // Fetch the tags for the new people in one go
@@ -127,15 +183,23 @@ class App extends Component<Props, State> {
             });
 
             // Add the following relationship to the people
-            follows.forEach(follow => {
-                const a = people[follow[0]];
-                const b = people[follow[1]];
+            // follows.forEach(follow => {
+            //     const a = people[follow[0]];
+            //     const b = people[follow[1]];
 
-                a.following.add(b.id);
-            });
+            //     a.following.add(b.id);
+            // });
 
             this.setState({
-                people
+                people,
+                follows: this.state.follows.concat(
+                    follows.map(follow => {
+                        return {
+                            source: follow[0] + '',
+                            target: follow[1] + ''
+                        };
+                    })
+                )
             });
         } catch (err) {
             console.error(err);
@@ -144,25 +208,9 @@ class App extends Component<Props, State> {
 
     private addPerson(id: number, people: People) {
         people[id] = {
-            id,
-            following: new Set<number>(),
+            id: `${id}`,
             tags: new Set<string>()
         };
-
-        return people[id];
-    }
-
-    // Find a person by ID in the set of People, otherwise create them
-    private getPerson(id: number, people: People) {
-        if (!people[id]) {
-            people[id] = {
-                id,
-                following: new Set<number>(),
-                tags: new Set<string>()
-            };
-        } else {
-            people[id] = cloneDeep(people[id]);
-        }
 
         return people[id];
     }
