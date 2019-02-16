@@ -6,10 +6,9 @@ import { Person, People, FollowRelationship } from './interfaces/Person';
 import { uniq } from 'lodash';
 import { Menu } from './Menu';
 import { Point } from './interfaces/Point';
+import { SocialNetwork } from './SocialNetwork';
 
 declare var store: Store;
-
-interface Props {}
 
 interface State {
     people: People;
@@ -19,9 +18,7 @@ interface State {
     center: Point;
 }
 
-class App extends Component<Props, State> {
-    private ref: SVGElement | null = null;
-
+class App extends Component<{}, State> {
     constructor(props: {}) {
         super(props);
 
@@ -53,103 +50,22 @@ class App extends Component<Props, State> {
     }
 
     public render() {
-        // const max = d3.max(allFollows) || 0;
-        // const min = d3.min(allFollows) || 0;
-        // let yScale = d3
-        //     .scaleLinear()
-        //     .domain([min, max])
-        //     .range([0, this.height / 2]);
-        // let xScale = d3
-        //     .scaleLinear()
-        //     .domain([min, max])
-        //     .range([0, this.width / 2]);
-
         const { width, height, follows, center } = this.state;
-
-        console.log(width, height, center);
 
         const people = Object.keys(this.state.people).map(
             id => this.state.people[id]
         );
 
-        let circles = d3
-            .select(this.ref)
-            .selectAll('circle')
-            .attr('cx', center.x)
-            .attr('cy', center.y)
-            .data(people);
-
-        circles.exit().remove();
-
-        const enter = circles.enter().append('circle');
-
-        circles = enter
-            .merge(circles as any)
-            .attr('r', d => d.radius)
-            .attr('fill', '#000000')
-            .attr('cx', center.x)
-            .attr('cy', center.y);
-
-        let lines = d3
-            .select(this.ref)
-            .selectAll('line')
-            .data(follows);
-
-        lines.exit().remove();
-
-        let linkEnter = lines
-            .enter()
-            .append('line')
-            .attr('stroke', function(d) {
-                return '#ddd';
-            })
-            .attr('strokeWidth', _ => 4);
-
-        lines = linkEnter.merge(lines as any);
-
-        // Create a force simulation that attracts circles to the center of the screen
-        // but repel and collide with each other
-
-        const simulation = d3
-            .forceSimulation(people)
-            .force(
-                'links',
-                d3.forceLink(follows).id(d => {
-                    return d['id'] + '';
-                })
-            )
-            .force(
-                'center',
-                d3
-                    .forceCenter()
-                    .x(width * 0.5)
-                    .y(height * 0.5)
-            )
-            .force('charge', d3.forceManyBody().strength(-5))
-            .force(
-                'collide',
-                d3.forceCollide().radius((d: Person) => d.radius)
-            );
-
-        simulation.nodes(people).on('tick', () => {
-            circles
-                .attr('cx', (d: any) =>
-                    Math.max(d.radius, Math.min(width - d.radius, d.x))
-                )
-                .attr('cy', (d: any) =>
-                    Math.max(d.radius, Math.min(height - d.radius, d.y))
-                );
-            lines
-                .attr('x1', (d: any) => d.source.x)
-                .attr('x2', (d: any) => d.target.x)
-                .attr('y1', (d: any) => d.source.y)
-                .attr('y2', (d: any) => d.target.y);
-        });
-
         return (
             <React.Fragment>
                 <Menu onAdd={this.onAdd} onClear={this.onClear} />
-                <svg ref={r => (this.ref = r)} width={width} height={height} />
+                <SocialNetwork
+                    people={people}
+                    follows={follows}
+                    width={width}
+                    height={height}
+                    center={center}
+                />
             </React.Fragment>
         );
     }
@@ -199,8 +115,8 @@ class App extends Component<Props, State> {
                 follows: this.state.follows.concat(
                     follows.map(follow => {
                         return {
-                            source: follow[0] + '',
-                            target: follow[1] + ''
+                            source: follow[0],
+                            target: follow[1]
                         };
                     })
                 )
@@ -219,11 +135,11 @@ class App extends Component<Props, State> {
 
     private addPerson(id: number, people: People) {
         people[id] = {
-            id: `${id}`,
+            id,
             tags: new Set<string>(),
             radius: 0,
-            following: new Set<string>(),
-            followed: new Set<string>()
+            following: new Set<number>(),
+            followed: new Set<number>()
         };
 
         return people[id];

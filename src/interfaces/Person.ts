@@ -1,9 +1,11 @@
-export interface Person {
-    id: string;
+import { SimulationNodeDatum } from 'd3';
+
+export interface Person extends SimulationNodeDatum {
+    id: number;
     tags: Set<string>;
     radius: number;
-    following: Set<string>;
-    followed: Set<string>;
+    following: Set<number>;
+    followed: Set<number>;
 }
 
 export interface People {
@@ -11,6 +13,6 @@ export interface People {
 }
 
 export interface FollowRelationship {
-    source: string;
-    target: string;
+    source: number;
+    target: number;
 }
