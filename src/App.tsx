@@ -47,7 +47,9 @@ class App extends Component<Props, State> {
         //     .domain([min, max])
         //     .range([0, this.width / 2]);
 
-        const people = Object.entries(this.state.people);
+        const people = Object.keys(this.state.people).map(
+            id => this.state.people[id]
+        );
 
         let circles = d3
             .select(this.ref)
@@ -60,7 +62,9 @@ class App extends Component<Props, State> {
 
         circles = enter
             .merge(circles as any)
-            .attr('r', 10)
+            .attr('r', d => {
+                return d.tags.size + 5;
+            })
             .attr('fill', '#000000');
 
         // Create a force simulation that attracts circles to the center of the screen
@@ -104,24 +108,48 @@ class App extends Component<Props, State> {
         );
     }
 
-    private onAdd() {
-        store
-            .sample()
-            .then(follows => {
-                const people = { ...this.state.people };
+    private async onAdd() {
+        try {
+            const follows = await store.sample();
 
-                follows.forEach(follow => {
-                    const firstPerson = this.getPerson(follow[0], people);
-                    const secondPerson = this.getPerson(follow[1], people);
+            const people = { ...this.state.people };
 
-                    firstPerson.following.add(secondPerson.id);
-                });
+            // Figure out the new people
+            const ids = follows.reduce((p, c) => p.concat(c), []);
+            const newIds = ids.filter(id => !people[id]);
 
-                this.setState({
-                    people
-                });
-            })
-            .catch(err => console.error(err));
+            // Fetch the tags for the new people in one go
+            const newPeopleTags = await store.tags(newIds);
+            // Create the new people and assign their tags
+            newIds.forEach((id, i) => {
+                const person = this.addPerson(id, people);
+                person.tags = new Set<string>(newPeopleTags[i]);
+            });
+
+            // Add the following relationship to the people
+            follows.forEach(follow => {
+                const a = people[follow[0]];
+                const b = people[follow[1]];
+
+                a.following.add(b.id);
+            });
+
+            this.setState({
+                people
+            });
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    private addPerson(id: number, people: People) {
+        people[id] = {
+            id,
+            following: new Set<number>(),
+            tags: new Set<string>()
+        };
+
+        return people[id];
     }
 
     // Find a person by ID in the set of People, otherwise create them
