@@ -3,6 +3,8 @@ import { Point } from '../interfaces/Point';
 import { Person } from '../interfaces/Person';
 import * as d3 from 'd3';
 import { calculateTagFrequencies } from '../util/DataUtils';
+import { random } from 'lodash';
+import { TagFrequency } from '../interfaces/TagFrequency';
 
 interface Props {
     width: number;
@@ -10,6 +12,8 @@ interface Props {
     center: Point;
     people: Person[];
 }
+
+const PADDING = window.innerWidth / 20;
 
 export class WordCloud extends React.PureComponent<Props> {
     private svg: SVGElement | null;
@@ -19,23 +23,26 @@ export class WordCloud extends React.PureComponent<Props> {
 
         const tagFrequencies = calculateTagFrequencies(people);
 
-        let words = d3
+        const selection = d3
             .select(this.svg)
             .selectAll('text')
-            .data(tagFrequencies);
+            .data(tagFrequencies, (d: TagFrequency) => d.tag);
 
-        const enter = words.enter().append('text');
+        const enter = selection
+            .enter()
+            .append('text')
+            .attr('x', d => random(PADDING, width - PADDING))
+            .attr('y', d => random(PADDING, height - PADDING));
 
-        words.exit().remove();
+        selection.exit().remove();
 
-        words = enter
-            .merge(words as any)
-            .attr('x', center.x)
-            .attr('y', center.y)
+        const transition = d3.transition('words').duration(1600);
+
+        const words = enter
+            .merge(selection as any)
             .text(d => d.tag)
-            .attr('font-size', d => d.count * 6 + 'px')
-            .attr('color', '#000000')
-            .attr('font-family', 'sans-serif');
+            .attr('font-size', d => d.count * 3 + 'px')
+            .attr('color', '#000000');
 
         const simulation = d3
             .forceSimulation(tagFrequencies)
@@ -46,15 +53,17 @@ export class WordCloud extends React.PureComponent<Props> {
                     .x(center.x)
                     .y(center.y)
             )
-            // .force('charge', d3.forceManyBody())
-            .force(
-                'collide',
-                d3.forceCollide().radius((d: Person) => d.radius)
-            );
+            .force('charge', d3.forceManyBody())
+            .force('collide', d3.forceCollide());
 
-        simulation.nodes(tagFrequencies).on('tick', () => {
-            words.attr('x', d => d.x).attr('y', d => d.y);
-        });
+        // Only run the simulation for 10 ticks, rather than continuously
+        simulation.tick(10);
+        simulation.stop();
+
+        words
+            .transition(transition)
+            .attr('x', d => d.x)
+            .attr('y', d => d.y);
 
         return <svg ref={r => (this.svg = r)} width={width} height={height} />;
     }

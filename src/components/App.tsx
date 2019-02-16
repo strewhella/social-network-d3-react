@@ -8,6 +8,7 @@ import { People } from '../interfaces/People';
 import { FollowRelationship } from '../interfaces/FollowRelationship';
 import { addPerson } from '../util/DataUtils';
 import { WordCloud } from './WordCloud';
+import { Person } from '../interfaces/Person';
 
 declare var store: Store;
 
@@ -56,8 +57,6 @@ class App extends Component<{}, State> {
         const people = Object.keys(this.state.people).map(
             id => this.state.people[id]
         );
-
-        console.log(people);
 
         return (
             <React.Fragment>

@@ -23,7 +23,7 @@ export class SocialNetwork extends React.PureComponent<Props> {
             .selectAll('circle')
             .attr('cx', center.x)
             .attr('cy', center.y)
-            .data(people);
+            .data(people, (d: Person) => d.id + '');
 
         circles.exit().remove();
 
@@ -55,7 +55,6 @@ export class SocialNetwork extends React.PureComponent<Props> {
 
         // Create a force simulation that attracts circles to the center of the screen
         // but repel and collide with each other
-
         const simulation = d3
             .forceSimulation(people)
             .force(
