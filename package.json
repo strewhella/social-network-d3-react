@@ -7,6 +7,7 @@
     "@types/node": "11.9.4",
     "@types/react": "16.8.3",
     "@types/react-dom": "16.8.1",
+    "d3": "^5.9.1",
     "react": "^16.8.2",
     "react-dom": "^16.8.2",
     "react-scripts": "2.1.5",
@@ -26,5 +27,9 @@
     "not dead",
     "not ie <= 11",
     "not op_mini all"
-  ]
+  ],
+  "prettier": {
+    "tabWidth": 4,
+    "semi": true
+  }
 }
