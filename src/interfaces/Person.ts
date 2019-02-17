@@ -6,4 +6,5 @@ export interface Person extends SimulationNodeDatum {
     radius: number;
     following: Set<number>;
     followed: Set<number>;
+    color: string;
 }

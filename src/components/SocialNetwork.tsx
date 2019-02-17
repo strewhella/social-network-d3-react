@@ -3,7 +3,6 @@ import { Point } from '../interfaces/Point';
 import * as d3 from 'd3';
 import { Person } from '../interfaces/Person';
 import { FollowRelationship } from '../interfaces/FollowRelationship';
-import { transition } from 'd3';
 import { enterTransition, exitTransition } from '../util/D3Utils';
 import { bound } from '../util/DataUtils';
 
@@ -39,6 +38,9 @@ export class SocialNetwork extends React.PureComponent<Props> {
         const enter = circles.enter().append('circle');
         enter
             .style('transform', 'scale(0)')
+            .attr('fill', '#000000')
+            .attr('stroke', d => d.color)
+            .attr('stroke-width', d => d.radius / 4)
             .transition(enterTransition)
             .style('transform-origin', 'center')
             .style('transform', 'scale(1)');
@@ -46,7 +48,6 @@ export class SocialNetwork extends React.PureComponent<Props> {
         circles = enter
             .merge(circles as any)
             .attr('r', d => d.radius)
-            .attr('fill', '#000000')
             .attr('cx', center.x)
             .attr('cy', center.y);
 

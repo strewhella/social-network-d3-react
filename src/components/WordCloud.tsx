@@ -43,7 +43,7 @@ export class WordCloud extends React.PureComponent<Props> {
             .style('transform', 'scale(0)')
             .remove();
 
-        const transition = d3.transition('words').duration(1600);
+        const transition = d3.transition('words').duration(1000);
 
         const words = enter
             .merge(selection as any)
@@ -67,6 +67,7 @@ export class WordCloud extends React.PureComponent<Props> {
         simulation.tick(10);
         simulation.stop();
 
+        // Transition words to their force calculated positions
         words
             .transition(transition)
             .attr('x', d => d.x)
