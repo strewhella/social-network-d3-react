@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Store } from '../interfaces/Store';
 import { uniq } from 'lodash';
-import { Menu } from './Menu';
+import { Interface } from './Interface';
 import { Point } from '../interfaces/Point';
 import { SocialNetwork } from './SocialNetwork';
 import { People } from '../interfaces/People';
@@ -73,7 +73,7 @@ class App extends Component<{}, State> {
                     height={height}
                     center={center}
                 />
-                <Menu onAdd={this.onAdd} onClear={this.onClear} />
+                <Interface onAdd={this.onAdd} onClear={this.onClear} />
             </React.Fragment>
         );
     }
