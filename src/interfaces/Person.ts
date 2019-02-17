@@ -7,4 +7,5 @@ export interface Person extends SimulationNodeDatum {
     following: Set<number>;
     followed: Set<number>;
     color: string;
+    hovering?: boolean;
 }

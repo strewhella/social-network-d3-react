@@ -18,6 +18,7 @@ interface State {
     width: number;
     height: number;
     center: Point;
+    hoveringPerson?: Person;
 }
 
 class App extends Component<{}, State> {
@@ -29,7 +30,7 @@ class App extends Component<{}, State> {
         const center = { x: width / 2, y: height / 2 };
 
         this.state = {
-            people: [],
+            people: {},
             follows: [],
             width,
             height,
@@ -39,6 +40,7 @@ class App extends Component<{}, State> {
         this.onAdd = this.onAdd.bind(this);
         this.onClear = this.onClear.bind(this);
         this.onResize = this.onResize.bind(this);
+        this.onHoverPerson = this.onHoverPerson.bind(this);
     }
 
     public componentDidMount() {
@@ -52,11 +54,14 @@ class App extends Component<{}, State> {
     }
 
     public render() {
-        const { width, height, follows, center } = this.state;
-
-        const people = Object.keys(this.state.people).map(
-            id => this.state.people[id]
-        );
+        const {
+            width,
+            height,
+            follows,
+            center,
+            hoveringPerson,
+            people
+        } = this.state;
 
         return (
             <React.Fragment>
@@ -64,14 +69,17 @@ class App extends Component<{}, State> {
                     width={width}
                     height={height}
                     center={center}
-                    people={people}
+                    people={people.list || []}
+                    hoverPerson={hoveringPerson}
                 />
                 <SocialNetwork
-                    people={people}
+                    people={people.list || []}
                     follows={follows}
                     width={width}
                     height={height}
                     center={center}
+                    onHover={this.onHoverPerson}
+                    // hoveringPerson={hoveringPerson}
                 />
                 <Interface onAdd={this.onAdd} onClear={this.onClear} />
             </React.Fragment>
@@ -109,6 +117,10 @@ class App extends Component<{}, State> {
                 person.radius = person.tags.size * 0.3 + 4;
             });
 
+            people.list = Object.keys(people)
+                .filter(k => k !== 'list')
+                .map(id => people[id]);
+
             // Add the following relationship to the people
             follows.forEach(follow => {
                 const a = people[follow[0]];
@@ -132,6 +144,14 @@ class App extends Component<{}, State> {
         } catch (err) {
             console.error(err);
         }
+    }
+
+    private onHoverPerson(id: number) {
+        const { people } = this.state;
+
+        this.setState({
+            hoveringPerson: people[id]
+        });
     }
 
     private onClear() {

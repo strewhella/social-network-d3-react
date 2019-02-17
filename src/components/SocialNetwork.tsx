@@ -12,6 +12,7 @@ interface Props {
     center: Point;
     people: Person[];
     follows: FollowRelationship[];
+    onHover: (id?: number) => void;
 }
 
 const PI_2 = Math.PI / 2;
@@ -20,55 +21,8 @@ export class SocialNetwork extends React.PureComponent<Props> {
     private svg: SVGElement | null;
 
     public render() {
-        const { width, height, center, people, follows } = this.props;
+        const { width, height, center, people, follows, onHover } = this.props;
 
-        let circles = d3
-            .select(this.svg)
-            .selectAll('circle')
-            .attr('cx', center.x)
-            .attr('cy', center.y)
-            .data(people, (d: Person) => d.id + '');
-
-        circles
-            .exit()
-            .transition(exitTransition)
-            .style('transform', 'scale(0)')
-            .remove();
-
-        const enter = circles.enter().append('circle');
-        enter
-            .style('transform', 'scale(0)')
-            .attr('fill', '#000000')
-            .attr('stroke', d => d.color)
-            .attr('stroke-width', d => d.radius / 4)
-            .transition(enterTransition)
-            .style('transform-origin', 'center')
-            .style('transform', 'scale(1)');
-
-        circles = enter
-            .merge(circles as any)
-            .attr('r', d => d.radius)
-            .attr('cx', center.x)
-            .attr('cy', center.y);
-
-        let triangles = d3
-            .select(this.svg)
-            .selectAll('polygon')
-            .data(follows);
-
-        triangles
-            .exit()
-            .transition(exitTransition)
-            .style('transform-origin', 'center')
-            .style('transform', 'scale(0)')
-            .remove();
-
-        let triangleEnter = triangles.enter().append('polygon');
-
-        triangles = triangleEnter.merge(triangles as any);
-
-        // Create a force simulation that attracts circles to the center of the screen
-        // but repel and collide with each other
         const simulation = d3
             .forceSimulation(people)
             .force(
@@ -87,6 +41,90 @@ export class SocialNetwork extends React.PureComponent<Props> {
                 'collide',
                 d3.forceCollide().radius((d: Person) => d.radius)
             );
+
+        let circles = d3
+            .select(this.svg)
+            .selectAll('circle')
+            .attr('cx', center.x)
+            .attr('cy', center.y)
+            .data(people, (d: Person) => d.id + '');
+
+        circles
+            .exit()
+            .transition(exitTransition)
+            .style('transform', 'scale(0)')
+            .on('mouseover', null)
+            .on('mouseout', null)
+            .remove();
+
+        const enter = circles.enter().append('circle');
+
+        enter
+            .style('transform', 'scale(0)')
+            .attr('fill', '#000000')
+            .attr('stroke', d => d.color)
+            .attr('stroke-width', d => d.radius / 4)
+            .attr('data-id', d => `id-${d.id}`)
+            .transition(enterTransition)
+            .style('transform-origin', 'center')
+            .style('cursor', 'pointer')
+            .style('transform', 'scale(1)');
+
+        circles = enter
+            .merge(circles as any)
+            .on('mouseover', d => {
+                d3.selectAll(`[data-id=id-${d.id}]`).attr('fill', d.color);
+                onHover(d.id);
+            })
+            .on('mouseout', function(d) {
+                d3.selectAll(`[data-id=id-${d.id}]`).attr('fill', '#000000');
+                onHover();
+            })
+            .attr('r', d => d.radius)
+            .attr('cx', center.x)
+            .attr('cy', center.y)
+            .attr('fill', d => (d.hovering ? d.color : '#000000'));
+
+        let triangles = d3
+            .select(this.svg)
+            .selectAll('polygon')
+            .data(follows);
+
+        triangles
+            .exit()
+            .transition(exitTransition)
+            .style('transform-origin', 'center')
+            .style('transform', 'scale(0)')
+            .remove();
+
+        let triangleEnter = triangles
+            .enter()
+            .append('polygon')
+            .style('cursor', 'pointer')
+            .attr('data-id', d => `id-${(d.source as Person).id}`)
+            .on('mouseover', d => {
+                const person = d.source as Person;
+                d3.selectAll(`[data-id=id-${person.id}]`).attr(
+                    'fill',
+                    person.color
+                );
+                onHover((d.source as Person).id);
+            })
+            .on('mouseout', _ => {
+                const selection = d3
+                    .selectAll('polygon')
+                    .merge(d3.selectAll('circle'));
+                // selection.interrupt();
+                selection
+                    // .transition('change')
+                    .attr('opacity', 1)
+                    .attr('fill', '#000000');
+                onHover();
+            });
+
+        triangles = triangleEnter
+            .merge(triangles as any)
+            .attr('fill', (d: any) => (d.hovering ? d.color : '#000000'));
 
         // Update the positions of the nodes and the lines based on their physics calculations
         simulation.nodes(people).on('tick', () => {
