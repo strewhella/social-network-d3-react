@@ -34,3 +34,6 @@ export const addPerson = (id: number, people: People) => {
 
     return people[id];
 };
+
+export const bound = (num: number, min: number, max: number) =>
+    Math.max(min, Math.min(max - min, num));
