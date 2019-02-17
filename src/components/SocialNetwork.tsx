@@ -73,12 +73,28 @@ export class SocialNetwork extends React.PureComponent<Props> {
 
         circles = enter
             .merge(circles as any)
-            .on('mouseover', d => {
-                d3.selectAll(`[data-id=id-${d.id}]`).attr('fill', d.color);
-                onHover(d.id);
+            .on('mouseover', hovering => {
+                const isActive = (d: Person) =>
+                    hovering.id === d.id || hovering.following.has(d.id);
+                d3.selectAll('circle').each(function(d: Person) {
+                    d3.select(this).attr('opacity', isActive(d) ? 1 : 0.1);
+                });
+                d3.selectAll('polygon').each(function(d: FollowRelationship) {
+                    d3.select(this).attr(
+                        'opacity',
+                        isActive(d.source) ? 1 : 0.05
+                    );
+                });
+                d3.selectAll(`[data-id=id-${hovering.id}]`).attr(
+                    'fill',
+                    hovering.color
+                );
+                onHover(hovering.id);
             })
             .on('mouseout', function(d) {
                 d3.selectAll(`[data-id=id-${d.id}]`).attr('fill', '#000000');
+                d3.selectAll('circle').attr('opacity', 1);
+                d3.selectAll('polygon').attr('opacity', 1);
                 onHover();
             })
             .attr('r', d => d.radius)
@@ -102,7 +118,7 @@ export class SocialNetwork extends React.PureComponent<Props> {
             .enter()
             .append('polygon')
             .style('cursor', 'pointer')
-            .attr('data-id', d => `id-${(d.source as Person).id}`);
+            .attr('data-id', (d: FollowRelationship) => `id-${d.source.id}`);
 
         triangles = triangleEnter
             .merge(triangles as any)
@@ -139,7 +155,7 @@ export class SocialNetwork extends React.PureComponent<Props> {
                 // Create 2 source points moved out from the source center
                 // by a third the radius at right angles from the angle between nodes
                 // to give directionality to follow relationship
-                const triangleSize = d.source.radius / 8;
+                const triangleSize = d.source.radius / 6;
                 const x1 = Math.cos(angle + PI_2) * triangleSize + source.x;
                 const x2 = Math.cos(angle - PI_2) * triangleSize + source.x;
                 const y1 = Math.sin(angle + PI_2) * triangleSize + source.y;

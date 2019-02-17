@@ -135,8 +135,8 @@ class App extends Component<{}, State> {
                 follows: this.state.follows.concat(
                     follows.map(follow => {
                         return {
-                            source: follow[0],
-                            target: follow[1]
+                            source: follow[0] as any,
+                            target: follow[1] as any
                         };
                     })
                 )
