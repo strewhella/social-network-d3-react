@@ -18,7 +18,8 @@ interface Props {
 const PI_2 = Math.PI / 2;
 
 export class SocialNetwork extends React.PureComponent<Props> {
-    private svg: SVGElement | null;
+    private circleGroup: SVGElement | null;
+    private triangleGroup: SVGElement | null;
 
     public render() {
         const { width, height, center, people, follows, onHover } = this.props;
@@ -33,17 +34,17 @@ export class SocialNetwork extends React.PureComponent<Props> {
                     .distance(
                         (d: any) => d.source.radius + d.target.radius + 10
                     )
-                    .strength(1)
+                    .strength(0)
             )
             .force('center', d3.forceCenter(center.x, center.y))
-            .force('charge', d3.forceManyBody().strength(-40))
+            .force('charge', d3.forceManyBody().strength(-1))
             .force(
                 'collide',
                 d3.forceCollide().radius((d: Person) => d.radius)
             );
 
         let circles = d3
-            .select(this.svg)
+            .select(this.circleGroup)
             .selectAll('circle')
             .attr('cx', center.x)
             .attr('cy', center.y)
@@ -86,7 +87,7 @@ export class SocialNetwork extends React.PureComponent<Props> {
             .attr('fill', d => (d.hovering ? d.color : '#000000'));
 
         let triangles = d3
-            .select(this.svg)
+            .select(this.triangleGroup)
             .selectAll('polygon')
             .data(follows);
 
@@ -101,30 +102,11 @@ export class SocialNetwork extends React.PureComponent<Props> {
             .enter()
             .append('polygon')
             .style('cursor', 'pointer')
-            .attr('data-id', d => `id-${(d.source as Person).id}`)
-            .on('mouseover', d => {
-                const person = d.source as Person;
-                d3.selectAll(`[data-id=id-${person.id}]`).attr(
-                    'fill',
-                    person.color
-                );
-                onHover((d.source as Person).id);
-            })
-            .on('mouseout', _ => {
-                const selection = d3
-                    .selectAll('polygon')
-                    .merge(d3.selectAll('circle'));
-                // selection.interrupt();
-                selection
-                    // .transition('change')
-                    .attr('opacity', 1)
-                    .attr('fill', '#000000');
-                onHover();
-            });
+            .attr('data-id', d => `id-${(d.source as Person).id}`);
 
         triangles = triangleEnter
             .merge(triangles as any)
-            .attr('fill', (d: any) => (d.hovering ? d.color : '#000000'));
+            .attr('fill', (d: any) => (d.hovering ? d.color : '#808080'));
 
         // Update the positions of the nodes and the lines based on their physics calculations
         simulation.nodes(people).on('tick', () => {
@@ -157,7 +139,7 @@ export class SocialNetwork extends React.PureComponent<Props> {
                 // Create 2 source points moved out from the source center
                 // by a third the radius at right angles from the angle between nodes
                 // to give directionality to follow relationship
-                const triangleSize = d.source.radius / 3;
+                const triangleSize = d.source.radius / 8;
                 const x1 = Math.cos(angle + PI_2) * triangleSize + source.x;
                 const x2 = Math.cos(angle - PI_2) * triangleSize + source.x;
                 const y1 = Math.sin(angle + PI_2) * triangleSize + source.y;
@@ -167,6 +149,11 @@ export class SocialNetwork extends React.PureComponent<Props> {
             });
         });
 
-        return <svg ref={r => (this.svg = r)} width={width} height={height} />;
+        return (
+            <svg width={width} height={height}>
+                <g ref={r => (this.triangleGroup = r)} />
+                <g ref={r => (this.circleGroup = r)} />
+            </svg>
+        );
     }
 }
