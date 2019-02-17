@@ -5,6 +5,7 @@ import * as d3 from 'd3';
 import { calculateTagFrequencies } from '../util/DataUtils';
 import { random } from 'lodash';
 import { TagFrequency } from '../interfaces/TagFrequency';
+import { enterTransition, exitTransition } from '../util/D3Utils';
 
 interface Props {
     width: number;
@@ -31,10 +32,16 @@ export class WordCloud extends React.PureComponent<Props> {
         const enter = selection
             .enter()
             .append('text')
-            .attr('x', d => random(PADDING, width - PADDING))
-            .attr('y', d => random(PADDING, height - PADDING));
+            .style('transform-origin', 'center')
+            .attr('x', _ => random(PADDING, width - PADDING))
+            .attr('y', _ => random(PADDING, height - PADDING));
+        enter.transition(enterTransition).style('transform', 'scale(1)');
 
-        selection.exit().remove();
+        selection
+            .exit()
+            .transition(exitTransition)
+            .style('transform', 'scale(0)')
+            .remove();
 
         const transition = d3.transition('words').duration(1600);
 
@@ -42,7 +49,7 @@ export class WordCloud extends React.PureComponent<Props> {
             .merge(selection as any)
             .text(d => d.tag)
             .attr('font-size', d => d.count * 3 + 'px')
-            .attr('color', '#000000');
+            .attr('fill', '#bababa');
 
         const simulation = d3
             .forceSimulation(tagFrequencies)

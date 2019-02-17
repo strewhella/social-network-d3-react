@@ -60,18 +60,18 @@ class App extends Component<{}, State> {
 
         return (
             <React.Fragment>
+                <WordCloud
+                    width={width}
+                    height={height}
+                    center={center}
+                    people={people}
+                />
                 <SocialNetwork
                     people={people}
                     follows={follows}
                     width={width}
                     height={height}
                     center={center}
-                />
-                <WordCloud
-                    width={width}
-                    height={height}
-                    center={center}
-                    people={people}
                 />
                 <Menu onAdd={this.onAdd} onClear={this.onClear} />
             </React.Fragment>

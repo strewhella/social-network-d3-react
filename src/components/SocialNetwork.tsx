@@ -3,6 +3,8 @@ import { Point } from '../interfaces/Point';
 import * as d3 from 'd3';
 import { Person } from '../interfaces/Person';
 import { FollowRelationship } from '../interfaces/FollowRelationship';
+import { transition } from 'd3';
+import { enterTransition, exitTransition } from '../util/D3Utils';
 
 interface Props {
     width: number;
@@ -25,9 +27,19 @@ export class SocialNetwork extends React.PureComponent<Props> {
             .attr('cy', center.y)
             .data(people, (d: Person) => d.id + '');
 
-        circles.exit().remove();
+        circles
+            .exit()
+            .transition(exitTransition)
+            .style('transform-origin', 'center')
+            .style('transform', 'scale(0)')
+            .remove();
 
         const enter = circles.enter().append('circle');
+        enter
+            .style('transform', 'scale(0)')
+            .transition(enterTransition)
+            .style('transform-origin', 'center')
+            .style('transform', 'scale(1)');
 
         circles = enter
             .merge(circles as any)
@@ -41,7 +53,12 @@ export class SocialNetwork extends React.PureComponent<Props> {
             .selectAll('line')
             .data(follows);
 
-        lines.exit().remove();
+        lines
+            .exit()
+            .transition(exitTransition)
+            .style('transform-origin', 'center')
+            .style('transform', 'scale(0)')
+            .remove();
 
         let linkEnter = lines
             .enter()
