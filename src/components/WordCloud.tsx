@@ -33,6 +33,10 @@ export class WordCloud extends React.PureComponent<Props> {
             .enter()
             .append('text')
             .style('transform-origin', 'center')
+            .attr('fill', _ => {
+                const value = random(100, 200);
+                return `rgb(${value},${value},${value})`;
+            })
             .attr('x', _ => random(PADDING, width - PADDING))
             .attr('y', _ => random(PADDING, height - PADDING));
         enter.transition(enterTransition).style('transform', 'scale(1)');
@@ -48,8 +52,7 @@ export class WordCloud extends React.PureComponent<Props> {
         const words = enter
             .merge(selection as any)
             .text(d => d.tag)
-            .attr('font-size', d => d.count * 3 + 'px')
-            .attr('fill', '#bababa');
+            .attr('font-size', d => d.count * 3 + 'px');
 
         const simulation = d3
             .forceSimulation(tagFrequencies)
