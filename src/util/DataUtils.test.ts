@@ -1,4 +1,4 @@
-import { calculateTagFrequencies } from './DataUtils';
+import { calculateTagFrequencies, normalizeTag } from './DataUtils';
 
 const createPerson = (tags: string[]) => {
     return {
@@ -31,10 +31,25 @@ describe.each([
         [createPerson(['1', '2']), createPerson(['2', '1'])],
         [{ tag: '1', count: 2 }, { tag: '2', count: 2 }],
         'should count multiple same tags across people'
+    ],
+    [
+        [createPerson(['a', 'A'])],
+        [{ tag: 'a', count: 2 }],
+        'should ignore case and take first instance'
     ]
 ])('DataUtils.calculateTagFrequencies', (people, expected, desc) => {
     test(desc, () => {
         const result = calculateTagFrequencies(people);
         expect(result).toEqual(expected);
+    });
+});
+
+describe.each([
+    ['@TechCrunch', '@TechCrunch', 'should leave valid tags alone'],
+    ['@TechCrunch:', '@TechCrunch', 'should trim trailing colon'],
+    ['@Tech:Crunch', '@Tech:Crunch', 'should ignore embedded colon']
+])('DataUtils.normalizeTag', (input, expected, desc) => {
+    test(desc, () => {
+        expect(normalizeTag(input)).toEqual(expected);
     });
 });

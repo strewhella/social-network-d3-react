@@ -6,7 +6,7 @@ import { Point } from '../interfaces/Point';
 import { SocialNetwork } from './SocialNetwork';
 import { People } from '../interfaces/People';
 import { FollowRelationship } from '../interfaces/FollowRelationship';
-import { addPerson } from '../util/DataUtils';
+import { addPerson, normalizeTag } from '../util/DataUtils';
 import { WordCloud } from './WordCloud';
 import { Person } from '../interfaces/Person';
 
@@ -112,7 +112,9 @@ class App extends Component<{}, State> {
             // Create the new people and assign their tags
             newIds.forEach((id, i) => {
                 const person = addPerson(id, people);
-                person.tags = new Set<string>(newPeopleTags[i]);
+                person.tags = new Set<string>(
+                    newPeopleTags[i].map(normalizeTag)
+                );
                 person.radius = person.tags.size * 0.3 + 4;
             });
 

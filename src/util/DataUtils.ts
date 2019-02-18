@@ -8,6 +8,16 @@ export const calculateTagFrequencies = (people: Person[]): TagFrequency[] => {
     const tagDict = {};
     people.forEach(person => {
         person.tags.forEach(tag => {
+            // Find existing tags ignoring case
+            // since twitter handles and hashtags are case insensitive
+            const existingTag = Object.keys(tagDict).find(
+                t => t.toLowerCase() === tag.toLowerCase()
+            );
+
+            if (existingTag) {
+                tag = existingTag;
+            }
+
             if (!tagDict[tag]) {
                 tagDict[tag] = 0;
             }
@@ -42,3 +52,11 @@ export const addPerson = (id: number, people: People) => {
 
 export const bound = (num: number, min: number, max: number) =>
     Math.max(min, Math.min(max - min, num));
+
+export const normalizeTag = (tag: string) => {
+    if (tag[tag.length - 1] === ':') {
+        tag = tag.substring(0, tag.length - 1);
+    }
+
+    return tag;
+};
