@@ -16,6 +16,8 @@ interface Props {
 }
 
 const PI_2 = Math.PI / 2;
+const LINK_FILL = '#808080';
+const NODE_FILL = '#000000';
 
 export class SocialNetwork extends React.PureComponent<Props> {
     private circleGroup: SVGElement | null;
@@ -60,7 +62,7 @@ export class SocialNetwork extends React.PureComponent<Props> {
 
         enter
             .style('transform', 'scale(0)')
-            .attr('fill', '#000000')
+            .attr('fill', NODE_FILL)
             .attr('stroke', d => d.color)
             .attr('stroke-width', d => d.radius / 4)
             .attr('data-id', d => `id-${d.id}`)
@@ -93,7 +95,14 @@ export class SocialNetwork extends React.PureComponent<Props> {
                 onHover(hovering.id);
             })
             .on('mouseout', function(d) {
-                d3.selectAll(`[data-id=id-${d.id}]`).attr('fill', '#000000');
+                d3.selectAll(`circle[data-id=id-${d.id}]`).attr(
+                    'fill',
+                    NODE_FILL
+                );
+                d3.selectAll(`polygon[data-id=id-${d.id}]`).attr(
+                    'fill',
+                    LINK_FILL
+                );
                 d3.selectAll('circle').attr('opacity', 1);
                 d3.selectAll('polygon').attr('opacity', 1);
                 onHover();
@@ -101,7 +110,7 @@ export class SocialNetwork extends React.PureComponent<Props> {
             .attr('r', d => d.radius)
             .attr('cx', center.x)
             .attr('cy', center.y)
-            .attr('fill', d => (d.hovering ? d.color : '#000000'));
+            .attr('fill', d => (d.hovering ? d.color : NODE_FILL));
 
         let triangles = d3
             .select(this.triangleGroup)
@@ -123,7 +132,7 @@ export class SocialNetwork extends React.PureComponent<Props> {
 
         triangles = triangleEnter
             .merge(triangles as any)
-            .attr('fill', (d: any) => (d.hovering ? d.color : '#808080'));
+            .attr('fill', (d: any) => (d.hovering ? d.color : LINK_FILL));
 
         // Update the positions of the nodes and the lines based on their physics calculations
         simulation.nodes(people).on('tick', () => {
