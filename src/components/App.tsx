@@ -79,7 +79,6 @@ class App extends Component<{}, State> {
                     height={height}
                     center={center}
                     onHover={this.onHoverPerson}
-                    // hoveringPerson={hoveringPerson}
                 />
                 <Interface onAdd={this.onAdd} onClear={this.onClear} />
             </React.Fragment>

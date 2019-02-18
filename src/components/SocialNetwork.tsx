@@ -46,16 +46,14 @@ export class SocialNetwork extends React.PureComponent<Props> {
         let circles = d3
             .select(this.circleGroup)
             .selectAll('circle')
-            .attr('cx', center.x)
-            .attr('cy', center.y)
             .data(people, (d: Person) => d.id + '');
 
         circles
             .exit()
-            .transition(exitTransition)
-            .style('transform', 'scale(0)')
             .on('mouseover', null)
             .on('mouseout', null)
+            .transition(exitTransition)
+            .style('transform', 'scale(0)')
             .remove();
 
         const enter = circles.enter().append('circle');
@@ -74,15 +72,18 @@ export class SocialNetwork extends React.PureComponent<Props> {
         circles = enter
             .merge(circles as any)
             .on('mouseover', hovering => {
-                const isActive = (d: Person) =>
-                    hovering.id === d.id || hovering.following.has(d.id);
                 d3.selectAll('circle').each(function(d: Person) {
-                    d3.select(this).attr('opacity', isActive(d) ? 1 : 0.1);
+                    d3.select(this).attr(
+                        'opacity',
+                        hovering.id === d.id || hovering.following.has(d.id)
+                            ? 1
+                            : 0.1
+                    );
                 });
                 d3.selectAll('polygon').each(function(d: FollowRelationship) {
                     d3.select(this).attr(
                         'opacity',
-                        isActive(d.source) ? 1 : 0.05
+                        hovering.id === d.source.id ? 1 : 0.05
                     );
                 });
                 d3.selectAll(`[data-id=id-${hovering.id}]`).attr(

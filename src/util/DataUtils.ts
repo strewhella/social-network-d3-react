@@ -8,8 +8,6 @@ export const calculateTagFrequencies = (people: Person[]): TagFrequency[] => {
     const tagDict = {};
     people.forEach(person => {
         person.tags.forEach(tag => {
-            tag = tag.replace(new RegExp(':', 'g'), '');
-
             if (!tagDict[tag]) {
                 tagDict[tag] = 0;
             }
