@@ -5,6 +5,7 @@ import { Person } from '../interfaces/Person';
 import { FollowRelationship } from '../interfaces/FollowRelationship';
 import { enterTransition, exitTransition } from '../util/D3Utils';
 import { bound } from '../util/DataUtils';
+import { random } from 'lodash';
 
 interface Props {
     width: number;
@@ -25,6 +26,12 @@ export class SocialNetwork extends React.PureComponent<Props> {
 
     public render() {
         const { width, height, center, people, follows, onHover } = this.props;
+
+        // Initialize node position so they start roughly in the center
+        people.forEach(p => {
+            p.x = p.x || random(center.x - 50, center.x + 50);
+            p.y = p.y || random(center.y - 50, center.y + 50);
+        });
 
         const simulation = d3
             .forceSimulation(people)
