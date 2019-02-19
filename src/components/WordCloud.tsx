@@ -84,6 +84,8 @@ export class WordCloud extends React.PureComponent<Props> {
         simulation.stop();
 
         // Transition words to their force calculated positions
+        words.interrupt();
+
         words
             .transition(transition)
             .attr('x', d => d.x)
