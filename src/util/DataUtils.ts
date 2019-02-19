@@ -1,7 +1,7 @@
 import { TagFrequency } from '../interfaces/TagFrequency';
 import { Person } from '../interfaces/Person';
 import { People } from '../interfaces/People';
-import { random } from 'lodash';
+import { random, cloneDeep } from 'lodash';
 
 export const calculateTagFrequencies = (people: Person[]): TagFrequency[] => {
     // Calculate how often each tag occurs
@@ -26,10 +26,32 @@ export const calculateTagFrequencies = (people: Person[]): TagFrequency[] => {
         });
     });
 
-    return Object.keys(tagDict).map(tag => ({
-        tag,
-        count: tagDict[tag]
-    }));
+    return Object.keys(tagDict).map(tag => {
+        const value = random(150, 220);
+        return {
+            tag,
+            count: tagDict[tag],
+            color: `rgb(${value},${value},${value})`
+        };
+    });
+};
+
+export const mergeTagFrequencies = (
+    first: TagFrequency[],
+    second: TagFrequency[]
+): TagFrequency[] => {
+    const dict = {};
+    cloneDeep(first)
+        .concat(cloneDeep(second))
+        .forEach(t => {
+            if (!dict[t.tag]) {
+                dict[t.tag] = t;
+            } else {
+                dict[t.tag].count += t.count;
+            }
+        });
+
+    return Object.keys(dict).map(tag => dict[tag]);
 };
 
 export const addPerson = (id: number, people: People) => {

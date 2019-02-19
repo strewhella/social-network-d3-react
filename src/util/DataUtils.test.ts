@@ -1,4 +1,8 @@
-import { calculateTagFrequencies, normalizeTag } from './DataUtils';
+import {
+    calculateTagFrequencies,
+    normalizeTag,
+    mergeTagFrequencies
+} from './DataUtils';
 
 const createPerson = (tags: string[]) => {
     return {
@@ -51,5 +55,24 @@ describe.each([
 ])('DataUtils.normalizeTag', (input, expected, desc) => {
     test(desc, () => {
         expect(normalizeTag(input)).toEqual(expected);
+    });
+});
+
+describe.each([
+    [
+        [{ tag: '1', count: 1 }],
+        [{ tag: '1', count: 2 }],
+        [{ tag: '1', count: 3 }],
+        'should add same tag'
+    ],
+    [
+        [{ tag: '1', count: 1 }],
+        [{ tag: '2', count: 2 }],
+        [{ tag: '1', count: 1 }, { tag: '2', count: 2 }],
+        'should not add different tags'
+    ]
+])('DataUtils.mergeTagFrequencies', (first, second, expected, desc) => {
+    test(desc, () => {
+        expect(mergeTagFrequencies(first, second)).toEqual(expected);
     });
 });

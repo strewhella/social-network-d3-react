@@ -6,6 +6,7 @@ import { FollowRelationship } from '../interfaces/FollowRelationship';
 import { enterTransition, exitTransition } from '../util/D3Utils';
 import { bound } from '../util/DataUtils';
 import { random } from 'lodash';
+import { Simulation } from 'd3';
 
 interface Props {
     width: number;
@@ -24,16 +25,14 @@ export class SocialNetwork extends React.PureComponent<Props> {
     private circleGroup: SVGElement | null;
     private triangleGroup: SVGElement | null;
 
-    public render() {
-        const { width, height, center, people, follows, onHover } = this.props;
+    private simulation: Simulation<Person, FollowRelationship>;
 
-        // Initialize node position so they start roughly in the center
-        people.forEach(p => {
-            p.x = p.x || random(center.x - 50, center.x + 50);
-            p.y = p.y || random(center.y - 50, center.y + 50);
-        });
+    constructor(props: Props) {
+        super(props);
 
-        const simulation = d3
+        const { people, follows, center } = props;
+
+        this.simulation = d3
             .forceSimulation(people)
             .force(
                 'links',
@@ -51,6 +50,20 @@ export class SocialNetwork extends React.PureComponent<Props> {
                 'collide',
                 d3.forceCollide().radius((d: Person) => d.radius)
             );
+    }
+
+    public render() {
+        const { width, height, center, people, follows, onHover } = this.props;
+
+        // Initialize node position so they start roughly in the center
+        people.forEach(p => {
+            p.x = p.x || random(center.x - 50, center.x + 50);
+            p.y = p.y || random(center.y - 50, center.y + 50);
+        });
+
+        this.simulation.nodes(people);
+        (this.simulation.force('links') as any).links(follows);
+        this.simulation.alpha(1).restart();
 
         let circles = d3
             .select(this.circleGroup)
@@ -142,7 +155,7 @@ export class SocialNetwork extends React.PureComponent<Props> {
             .attr('fill', (d: any) => (d.hovering ? d.color : LINK_FILL));
 
         // Update the positions of the nodes and the lines based on their physics calculations
-        simulation.nodes(people).on('tick', () => {
+        this.simulation.nodes(people).on('tick', () => {
             // Keep nodes within the width and height bounds
             // https://bl.ocks.org/mbostock/1129492
             circles

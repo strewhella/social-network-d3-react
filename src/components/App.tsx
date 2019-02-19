@@ -1,14 +1,20 @@
 import React, { Component } from 'react';
 import { Store } from '../interfaces/Store';
-import { uniq } from 'lodash';
+import { uniq, cloneDeep } from 'lodash';
 import { Interface } from './Interface';
 import { Point } from '../interfaces/Point';
 import { SocialNetwork } from './SocialNetwork';
 import { People } from '../interfaces/People';
 import { FollowRelationship } from '../interfaces/FollowRelationship';
-import { addPerson, normalizeTag } from '../util/DataUtils';
+import {
+    addPerson,
+    normalizeTag,
+    calculateTagFrequencies,
+    mergeTagFrequencies
+} from '../util/DataUtils';
 import { WordCloud } from './WordCloud';
 import { Person } from '../interfaces/Person';
+import { TagFrequency } from '../interfaces/TagFrequency';
 
 declare var store: Store;
 
@@ -19,6 +25,7 @@ interface State {
     height: number;
     center: Point;
     hoveringPerson?: Person;
+    tagFrequencies: TagFrequency[];
 }
 
 class App extends Component<{}, State> {
@@ -34,7 +41,8 @@ class App extends Component<{}, State> {
             follows: [],
             width,
             height,
-            center
+            center,
+            tagFrequencies: []
         };
 
         this.onAdd = this.onAdd.bind(this);
@@ -60,7 +68,8 @@ class App extends Component<{}, State> {
             follows,
             center,
             hoveringPerson,
-            people
+            people,
+            tagFrequencies
         } = this.state;
 
         return (
@@ -69,8 +78,8 @@ class App extends Component<{}, State> {
                     width={width}
                     height={height}
                     center={center}
-                    people={people.list || []}
                     hoverPerson={hoveringPerson}
+                    tagFrequencies={tagFrequencies}
                 />
                 <SocialNetwork
                     people={people.list || []}
@@ -110,12 +119,13 @@ class App extends Component<{}, State> {
             // Fetch the tags for the new people in one go
             const newPeopleTags = await store.tags(newIds);
             // Create the new people and assign their tags
-            newIds.forEach((id, i) => {
+            const newPeople = newIds.map((id, i) => {
                 const person = addPerson(id, people);
                 person.tags = new Set<string>(
                     newPeopleTags[i].map(normalizeTag)
                 );
                 person.radius = person.tags.size * 0.3 + 4;
+                return person;
             });
 
             people.list = Object.keys(people)
@@ -131,8 +141,15 @@ class App extends Component<{}, State> {
                 b.followed.add(a.id);
             });
 
+            const newTagFrequencies = calculateTagFrequencies(newPeople);
+            const tagFrequencies = mergeTagFrequencies(
+                this.state.tagFrequencies,
+                newTagFrequencies
+            );
+
             this.setState({
                 people,
+                tagFrequencies,
                 follows: this.state.follows.concat(
                     follows.map(follow => {
                         return {
