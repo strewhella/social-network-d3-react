@@ -175,7 +175,8 @@ class App extends Component<{}, State> {
     private onClear() {
         this.setState({
             people: {},
-            follows: []
+            follows: [],
+            tagFrequencies: []
         });
     }
 }

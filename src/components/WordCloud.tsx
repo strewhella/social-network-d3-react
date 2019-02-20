@@ -2,8 +2,7 @@ import * as React from 'react';
 import { Point } from '../interfaces/Point';
 import { Person } from '../interfaces/Person';
 import * as d3 from 'd3';
-import { calculateTagFrequencies } from '../util/DataUtils';
-import { random, cloneDeep } from 'lodash';
+import { random } from 'lodash';
 import { TagFrequency } from '../interfaces/TagFrequency';
 import { Simulation } from 'd3';
 import {
@@ -20,29 +19,50 @@ interface Props {
     tagFrequencies: TagFrequency[];
 }
 
+interface State {
+    finishingHover?: boolean;
+}
+
 const PADDING = window.innerWidth / 20;
 
-export class WordCloud extends React.PureComponent<Props> {
+export class WordCloud extends React.PureComponent<Props, State> {
     private svg: SVGElement | null;
-
     private simulation: Simulation<TagFrequency, any>;
 
     constructor(props: Props) {
         super(props);
 
-        const { tagFrequencies, center } = props;
+        this.state = {};
 
         this.simulation = d3
-            .forceSimulation(cloneDeep(tagFrequencies))
+            .forceSimulation(props.tagFrequencies)
             .force(
                 'center',
                 d3
                     .forceCenter()
-                    .x(center.x)
-                    .y(center.y)
+                    .x(props.center.x)
+                    .y(props.center.y)
             )
             .force('charge', d3.forceManyBody())
             .force('collide', d3.forceCollide());
+    }
+
+    public componentWillReceiveProps(nextProps: Props) {
+        if (this.props.hoverPerson && !nextProps.hoverPerson) {
+            this.setState({
+                finishingHover: true
+            });
+        }
+
+        if (
+            this.state.finishingHover &&
+            !this.props.hoverPerson &&
+            !nextProps.hoverPerson
+        ) {
+            this.setState({
+                finishingHover: false
+            });
+        }
     }
 
     public render() {
@@ -53,6 +73,7 @@ export class WordCloud extends React.PureComponent<Props> {
             hoverPerson,
             center
         } = this.props;
+        const { finishingHover } = this.state;
 
         const selection = d3
             .select(this.svg)
@@ -63,6 +84,7 @@ export class WordCloud extends React.PureComponent<Props> {
             .enter()
             .append('text')
             .style('transform-origin', 'center')
+            .style('transform', 'scale(0)')
             .attr('x', _ => random(PADDING, width - PADDING))
             .attr('y', _ => random(PADDING, height - PADDING));
         enter.transition(enterTransition).style('transform', 'scale(1)');
@@ -90,20 +112,20 @@ export class WordCloud extends React.PureComponent<Props> {
                 hoverPerson && !hoverPerson.tags.has(d.tag) ? 0.1 : 1
             );
 
-        // Reset the positions of all tags to the center so they recalculate correctly
-        tagFrequencies.forEach(p => {
-            p.x = random(center.x - 50, center.x + 50);
-            p.y = random(center.y - 50, center.y + 50);
-        });
+        if (!hoverPerson && !finishingHover) {
+            // Reset the positions of all tags to the center so they recalculate correctly
+            tagFrequencies.forEach(p => {
+                p.x = random(center.x - 50, center.x + 50);
+                p.y = random(center.y - 50, center.y + 50);
+            });
 
-        this.simulation.nodes(tagFrequencies);
-        // Only run the simulation for 10 ticks, rather than continuously
-        this.simulation.tick(3);
-        this.simulation.stop();
+            this.simulation.nodes(tagFrequencies);
+            // Only run the simulation for a few ticks, rather than continuously
+            this.simulation.tick(3);
+            this.simulation.stop();
+        }
 
         // Transition words to their force calculated positions
-        words.interrupt();
-
         words
             .transition(transition)
             .attr('x', d => d.x)
