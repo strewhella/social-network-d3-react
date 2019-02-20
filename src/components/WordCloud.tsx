@@ -34,17 +34,7 @@ export class WordCloud extends React.PureComponent<Props, State> {
 
         this.state = {};
 
-        this.simulation = d3
-            .forceSimulation(props.tagFrequencies)
-            .force(
-                'center',
-                d3
-                    .forceCenter()
-                    .x(props.center.x)
-                    .y(props.center.y)
-            )
-            .force('charge', d3.forceManyBody())
-            .force('collide', d3.forceCollide());
+        this.simulation = this.createSimulation();
     }
 
     public componentWillReceiveProps(nextProps: Props) {
@@ -62,6 +52,13 @@ export class WordCloud extends React.PureComponent<Props, State> {
             this.setState({
                 finishingHover: false
             });
+        }
+
+        if (
+            this.props.tagFrequencies.length === 0 &&
+            nextProps.tagFrequencies.length > 0
+        ) {
+            this.simulation = this.createSimulation();
         }
     }
 
@@ -114,8 +111,8 @@ export class WordCloud extends React.PureComponent<Props, State> {
         if (!hoverPerson && !finishingHover) {
             // Reset the positions of all tags to the center so they recalculate correctly
             tagFrequencies.forEach(p => {
-                p.x = random(center.x - 50, center.x + 50);
-                p.y = random(center.y - 50, center.y + 50);
+                p.x = random(center.x - PADDING, center.x + PADDING);
+                p.y = random(center.y - PADDING, center.y + PADDING);
             });
 
             this.simulation.nodes(tagFrequencies);
@@ -132,5 +129,23 @@ export class WordCloud extends React.PureComponent<Props, State> {
             .attr('font-size', d => d.count * 3 + 6 + 'px');
 
         return <svg ref={r => (this.svg = r)} width={width} height={height} />;
+    }
+
+    private createSimulation() {
+        const { tagFrequencies, center } = this.props;
+        return d3
+            .forceSimulation(tagFrequencies)
+            .force(
+                'center',
+                d3
+                    .forceCenter()
+                    .x(center.x)
+                    .y(center.y)
+            )
+            .force(
+                'charge',
+                d3.forceManyBody().strength(-window.innerHeight / 4)
+            )
+            .force('collide', d3.forceCollide().strength(50));
     }
 }
