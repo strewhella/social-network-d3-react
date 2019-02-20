@@ -9,7 +9,7 @@ import { FollowRelationship } from '../interfaces/FollowRelationship';
 import {
     addPerson,
     normalizeTag,
-    calculateTagFrequencies,
+    createTagFrequencies,
     mergeTagFrequencies
 } from '../util/DataUtils';
 import { WordCloud } from './WordCloud';
@@ -141,7 +141,7 @@ class App extends Component<{}, State> {
                 b.followed.add(a.id);
             });
 
-            const newTagFrequencies = calculateTagFrequencies(newPeople);
+            const newTagFrequencies = createTagFrequencies(newPeople);
             const tagFrequencies = mergeTagFrequencies(
                 this.state.tagFrequencies,
                 newTagFrequencies

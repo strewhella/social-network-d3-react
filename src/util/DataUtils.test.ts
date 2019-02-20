@@ -1,5 +1,5 @@
 import {
-    calculateTagFrequencies,
+    createTagFrequencies,
     normalizeTag,
     mergeTagFrequencies
 } from './DataUtils';
@@ -41,9 +41,10 @@ describe.each([
         [{ tag: 'a', count: 2 }],
         'should ignore case and take first instance'
     ]
-])('DataUtils.calculateTagFrequencies', (people, expected, desc) => {
+])('DataUtils.createTagFrequencies', (people, expected, desc) => {
     test(desc, () => {
-        const result = calculateTagFrequencies(people);
+        const result = createTagFrequencies(people);
+        result.forEach(r => (r.color = undefined));
         expect(result).toEqual(expected);
     });
 });
@@ -70,6 +71,12 @@ describe.each([
         [{ tag: '2', count: 2 }],
         [{ tag: '1', count: 1 }, { tag: '2', count: 2 }],
         'should not add different tags'
+    ],
+    [
+        [{ tag: 'a', count: 1 }],
+        [{ tag: 'A', count: 1 }],
+        [{ tag: 'a', count: 2 }],
+        'should merge different cased tags'
     ]
 ])('DataUtils.mergeTagFrequencies', (first, second, expected, desc) => {
     test(desc, () => {

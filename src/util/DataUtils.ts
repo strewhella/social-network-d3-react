@@ -3,7 +3,7 @@ import { Person } from '../interfaces/Person';
 import { People } from '../interfaces/People';
 import { random, cloneDeep } from 'lodash';
 
-export const calculateTagFrequencies = (people: Person[]): TagFrequency[] => {
+export const createTagFrequencies = (people: Person[]): TagFrequency[] => {
     // Calculate how often each tag occurs
     const tagDict = {};
     people.forEach(person => {
@@ -44,14 +44,15 @@ export const mergeTagFrequencies = (
     cloneDeep(first)
         .concat(cloneDeep(second))
         .forEach(t => {
-            if (!dict[t.tag]) {
-                dict[t.tag] = t;
+            const tag = t.tag.toLowerCase();
+            if (!dict[tag]) {
+                dict[tag] = t;
             } else {
-                dict[t.tag].count += t.count;
+                dict[tag].count += t.count;
             }
         });
 
-    return Object.keys(dict).map(tag => dict[tag]);
+    return Object.keys(dict).map(key => dict[key]);
 };
 
 export const addPerson = (id: number, people: People) => {
