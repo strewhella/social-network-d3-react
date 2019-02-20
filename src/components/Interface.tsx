@@ -37,7 +37,7 @@ export class Interface extends React.PureComponent<Props> {
             this.props.onAdd();
             setTimeout(() => {
                 this.adding = false;
-            }, 600);
+            }, 1000);
         }
     }
 }
