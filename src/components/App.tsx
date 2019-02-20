@@ -186,12 +186,12 @@ class App extends Component<{}, State> {
         this.setState({
             people: {},
             follows: [],
-            tagFrequencies: []
+            tagFrequencies: [],
+            search: ''
         });
     }
 
     private onSearch(search: string) {
-        console.log('search', search);
         this.setState({
             search
         });
