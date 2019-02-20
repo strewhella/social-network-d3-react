@@ -18,7 +18,7 @@ interface Props {
 }
 
 const PI_2 = Math.PI / 2;
-const LINK_FILL = '#808080';
+const LINK_FILL = '#B8B8B8';
 const NODE_FILL = '#000000';
 
 export class SocialNetwork extends React.PureComponent<Props> {

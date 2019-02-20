@@ -3,6 +3,8 @@ import * as React from 'react';
 interface Props {
     onAdd: () => void;
     onClear: () => void;
+    onSearch: (search: string) => void;
+    search: string;
 }
 
 export class Interface extends React.PureComponent<Props> {
@@ -12,10 +14,11 @@ export class Interface extends React.PureComponent<Props> {
         super(props);
 
         this.onAdd = this.onAdd.bind(this);
+        this.onSearch = this.onSearch.bind(this);
     }
 
     public render() {
-        const { onAdd, onClear } = this.props;
+        const { onClear, search } = this.props;
 
         return (
             <React.Fragment>
@@ -27,6 +30,13 @@ export class Interface extends React.PureComponent<Props> {
                 <a className="button clear" onClick={onClear}>
                     <div>-</div>
                 </a>
+                <input
+                    className="search"
+                    type="text"
+                    placeholder="Search"
+                    onChange={this.onSearch}
+                    value={search}
+                />
             </React.Fragment>
         );
     }
@@ -39,5 +49,9 @@ export class Interface extends React.PureComponent<Props> {
                 this.adding = false;
             }, 1000);
         }
+    }
+
+    private onSearch(event: any) {
+        this.props.onSearch(event.target.value);
     }
 }

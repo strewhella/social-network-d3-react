@@ -5,6 +5,7 @@ import * as d3 from 'd3';
 import { random } from 'lodash';
 import { TagFrequency } from '../interfaces/TagFrequency';
 import { Simulation } from 'd3';
+import { filterTags } from '../util/DataUtils';
 import {
     enterTransition,
     exitTransition,
@@ -17,10 +18,11 @@ interface Props {
     center: Point;
     hoverPerson?: Person;
     tagFrequencies: TagFrequency[];
+    search?: string;
 }
 
 interface State {
-    finishingHover?: boolean;
+    interacting?: boolean;
 }
 
 const PADDING = window.innerWidth / 20;
@@ -38,19 +40,24 @@ export class WordCloud extends React.PureComponent<Props, State> {
     }
 
     public componentWillReceiveProps(nextProps: Props) {
-        if (this.props.hoverPerson && !nextProps.hoverPerson) {
+        if (
+            (this.props.hoverPerson && !nextProps.hoverPerson) ||
+            (!this.props.hoverPerson && nextProps.hoverPerson) ||
+            this.props.search !== nextProps.search
+        ) {
             this.setState({
-                finishingHover: true
+                interacting: true
             });
         }
 
         if (
-            this.state.finishingHover &&
-            !this.props.hoverPerson &&
-            !nextProps.hoverPerson
+            this.state.interacting &&
+            (!this.props.hoverPerson &&
+                !nextProps.hoverPerson &&
+                this.props.search === nextProps.search)
         ) {
             this.setState({
-                finishingHover: false
+                interacting: false
             });
         }
 
@@ -68,9 +75,10 @@ export class WordCloud extends React.PureComponent<Props, State> {
             height,
             tagFrequencies,
             hoverPerson,
-            center
+            center,
+            search
         } = this.props;
-        const { finishingHover } = this.state;
+        const { interacting } = this.state;
 
         const selection = d3
             .select(this.svg)
@@ -95,20 +103,27 @@ export class WordCloud extends React.PureComponent<Props, State> {
 
         const words = enter.merge(selection as any).text(d => d.tag);
 
+        const filteredTags =
+            (search && filterTags(tagFrequencies, search)) || [];
+
         words.interrupt('change');
         words
             .transition(stateChangeTransition)
             .attr('fill', d => {
                 // Highlight tags of hovered person
-                return hoverPerson && hoverPerson.tags.has(d.tag)
-                    ? hoverPerson.color
+                return (hoverPerson && hoverPerson.tags.has(d.tag)) ||
+                    (search && filteredTags.some(t => d.tag === t))
+                    ? '#000000'
                     : d.color;
             })
             .attr('opacity', d =>
-                hoverPerson && !hoverPerson.tags.has(d.tag) ? 0.1 : 1
+                (hoverPerson && !hoverPerson.tags.has(d.tag)) ||
+                (search && !filteredTags.some(t => d.tag === t))
+                    ? 0.05
+                    : 1
             );
 
-        if (!hoverPerson && !finishingHover) {
+        if (!interacting) {
             // Reset the positions of all tags to the center so they recalculate correctly
             tagFrequencies.forEach(p => {
                 p.x = random(center.x - PADDING, center.x + PADDING);

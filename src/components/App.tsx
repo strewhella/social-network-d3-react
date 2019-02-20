@@ -26,6 +26,7 @@ interface State {
     center: Point;
     hoveringPerson?: Person;
     tagFrequencies: TagFrequency[];
+    search?: string;
 }
 
 class App extends Component<{}, State> {
@@ -42,13 +43,15 @@ class App extends Component<{}, State> {
             width,
             height,
             center,
-            tagFrequencies: []
+            tagFrequencies: [],
+            search: ''
         };
 
         this.onAdd = this.onAdd.bind(this);
         this.onClear = this.onClear.bind(this);
         this.onResize = this.onResize.bind(this);
         this.onHoverPerson = this.onHoverPerson.bind(this);
+        this.onSearch = this.onSearch.bind(this);
     }
 
     public componentDidMount() {
@@ -69,7 +72,8 @@ class App extends Component<{}, State> {
             center,
             hoveringPerson,
             people,
-            tagFrequencies
+            tagFrequencies,
+            search
         } = this.state;
 
         return (
@@ -80,6 +84,7 @@ class App extends Component<{}, State> {
                     center={center}
                     hoverPerson={hoveringPerson}
                     tagFrequencies={tagFrequencies}
+                    search={search}
                 />
                 <SocialNetwork
                     people={people.list || []}
@@ -89,7 +94,12 @@ class App extends Component<{}, State> {
                     center={center}
                     onHover={this.onHoverPerson}
                 />
-                <Interface onAdd={this.onAdd} onClear={this.onClear} />
+                <Interface
+                    onAdd={this.onAdd}
+                    onClear={this.onClear}
+                    onSearch={this.onSearch}
+                    search={search}
+                />
             </React.Fragment>
         );
     }
@@ -177,6 +187,13 @@ class App extends Component<{}, State> {
             people: {},
             follows: [],
             tagFrequencies: []
+        });
+    }
+
+    private onSearch(search: string) {
+        console.log('search', search);
+        this.setState({
+            search
         });
     }
 }

@@ -83,3 +83,9 @@ export const normalizeTag = (tag: string) => {
 
     return tag;
 };
+
+export const filterTags = (tags: TagFrequency[], search: string) => {
+    return tags
+        .filter(t => t.tag.toLowerCase().includes(search.toLowerCase()))
+        .map(t => t.tag);
+};

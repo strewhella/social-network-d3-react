@@ -16,7 +16,7 @@ h1 {
     margin: 0;
     position: fixed;
     bottom: 2%;
-    left: 2%;
+    left: 5%;
     font-size: 2em;
 }
 
@@ -71,4 +71,18 @@ svg {
     position: fixed;
     top: 0;
     left: 0;
+}
+
+.search {
+    position: fixed;
+    bottom: 2%;
+    right: 5%;
+    background-color: white;
+    border: 3px solid black;
+    border-radius: 50px;
+    padding: 10px;
+    width: 20%;
+    color: black;
+    font-size: 20px;
+    text-align: center;
 }
