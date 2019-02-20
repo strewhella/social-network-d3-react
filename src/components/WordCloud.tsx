@@ -84,7 +84,6 @@ export class WordCloud extends React.PureComponent<Props, State> {
             .enter()
             .append('text')
             .style('transform-origin', 'center')
-            .style('transform', 'scale(0)')
             .attr('x', _ => random(PADDING, width - PADDING))
             .attr('y', _ => random(PADDING, height - PADDING));
         enter.transition(enterTransition).style('transform', 'scale(1)');
